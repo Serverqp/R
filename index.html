@@ -186,6 +186,55 @@
             document.getElementById("details-page").style.display = "none";
             updateCapacityDisplay();
         }
+    // URL مربوط به Web App شما
+    const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzNXOOqnreqVofzb2bjhFQk8VLK8PqcUa-evzSHt5mcyAi0bRdbeN6lQPFaRiTyWQ40Vg/exec";
+
+    // ارسال داده به Google Sheets
+    function sendToGoogleSheets(sessionId, capacity) {
+        const data = {
+            sessionId: sessionId,
+            capacity: capacity,
+            timestamp: new Date().toISOString(),
+        };
+
+        fetch(GOOGLE_SHEETS_API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("مشکلی در ارسال داده به Google Sheets وجود دارد.");
+            }
+            return response.json();
+        })
+        .then((result) => {
+            alert("اطلاعات با موفقیت در Google Sheets ثبت شد!");
+            console.log("نتیجه:", result);
+        })
+        .catch((error) => {
+            console.error("خطا در ارسال به Google Sheets:", error);
+            alert("مشکلی در ارتباط با Google Sheets وجود دارد.");
+        });
+    }
+
+    // مثال: هنگام رزرو سانس، داده را ارسال کنید
+    function reserveSession(sessionId) {
+        if (capacities[sessionId] < 6) {
+            capacities[sessionId]++;
+            localStorage.setItem("capacities", JSON.stringify(capacities));
+
+            // ارسال اطلاعات سانس به Google Sheets
+            sendToGoogleSheets(sessionId, capacities[sessionId]);
+
+            alert(`سانس ${sessionId} با موفقیت رزرو شد!`);
+            updateCapacityDisplay();
+        } else {
+            alert("ظرفیت این سانس تکمیل شده است.");
+        }
+    }
     </script>
 </body>
 </html>
