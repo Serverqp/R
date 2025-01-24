@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جشن</title>
+    <style>
+        body {
+            font-family: "Vazir", Arial, sans-serif;
+            direction: rtl;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+
+        .session {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            background: #f7f7f7;
+            transition: transform 0.2s, background-color 0.3s;
+        }
+
+        .session:hover {
+            transform: scale(1.02);
+            background-color: #eef;
+        }
+
+        .session.full {
+            background-color: #ffe6e6;
+        }
+
+        .capacity {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover:not([disabled]) {
+            background-color: #0056b3;
+        }
+
+        button[disabled] {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+
+        .info {
+            color: #555;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="main-page">
+        <h1>جشن</h1>
+        
+        <div class="session" id="session-1">
+            <h2>سانس 1</h2>
+            <p>تاریخ: 1401/12/30</p>
+            <p>ساعت: 18:00</p>
+            <div class="capacity" id="capacity-1">ظرفیت: 0 / 6</div>
+            <button onclick="viewSession(1)">مشاهده و رزرو</button>
+        </div>
+
+        <div class="session" id="session-2">
+            <h2>سانس 2</h2>
+            <p>تاریخ: 1401/12/30</p>
+            <p>ساعت: 20:30</p>
+            <div class="capacity" id="capacity-2">ظرفیت: 0 / 6</div>
+            <button onclick="viewSession(2)">مشاهده و رزرو</button>
+        </div>
+    </div>
+
+    <div class="container" id="details-page" style="display: none;">
+        <h1>جزئیات سانس</h1>
+        <p id="session-details"></p>
+        <button onclick="reserve()">رزرو</button>
+        <button onclick="goBack()">بازگشت</button>
+        <p class="info">توجه: پس از رزرو، امکان تغییر سانس وجود ندارد.</p>
+    </div>
+
+    <script>
+        let capacities = JSON.parse(localStorage.getItem("capacities")) || { 1: 0, 2: 0 };
+        let reservedSession = localStorage.getItem("reservedSession") || null;
+        let currentSession = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            updateCapacityDisplay();
+
+            // بررسی دکمه‌ها و محدودیت‌ها
+            const mainPage = document.getElementById("main-page");
+            if (mainPage) {
+                for (let id of [1, 2]) {
+                    const session = document.getElementById(`session-${id}`);
+                    const button = session.querySelector("button");
+                    if (capacities[id] >= 6) {
+                        session.classList.add("full");
+                        button.disabled = true;
+                        button.innerText = "ظرفیت تکمیل شده است";
+                    } else if (reservedSession) {
+                        button.disabled = true;
+                        button.innerText = "شما یک سانس رزرو کرده‌اید";
+                    }
+                }
+            }
+        });
+
+        function updateCapacityDisplay() {
+            for (let id of [1, 2]) {
+                const capacityDiv = document.getElementById(`capacity-${id}`);
+                capacityDiv.innerText = `ظرفیت: ${capacities[id]} / 6`;
+            }
+        }
+
+        function viewSession(sessionId) {
+            if (reservedSession) {
+                alert("شما قبلاً یک سانس رزرو کرده‌اید و نمی‌توانید سانس دیگری رزرو کنید.");
+                return;
+            }
+
+            if (capacities[sessionId] >= 6) {
+                alert("ظرفیت این سانس تکمیل شده است.");
+                return;
+            }
+
+            currentSession = sessionId;
+            localStorage.setItem("currentSession", sessionId);
+            document.getElementById("main-page").style.display = "none";
+            document.getElementById("details-page").style.display = "block";
+
+            const times = { 1: "18:00", 2: "20:30" };
+            document.getElementById("session-details").innerText = `سانس ${sessionId} ساعت ${times[sessionId]}`;
+        }
+
+        function reserve() {
+            if (reservedSession) {
+                alert("شما قبلاً یک سانس رزرو کرده‌اید.");
+                return;
+            }
+
+            if (capacities[currentSession] < 6) {
+                capacities[currentSession]++;
+                localStorage.setItem("capacities", JSON.stringify(capacities));
+                localStorage.setItem("reservedSession", currentSession);
+
+                const times = { 1: "18:00", 2: "20:30" };
+                const address = "آدرس: سالن بزرگ جشن، خیابان گلستان";
+                alert(`رزرو با موفقیت انجام شد!\nسانس: ${currentSession}\nساعت: ${times[currentSession]}\n${address}`);
+                
+                goBack();
+            } else {
+                alert("ظرفیت این سانس تکمیل شده است.");
+            }
+        }
+
+        function goBack() {
+            document.getElementById("main-page").style.display = "block";
+            document.getElementById("details-page").style.display = "none";
+            updateCapacityDisplay();
+        }
+    </script>
+</body>
+</html>
